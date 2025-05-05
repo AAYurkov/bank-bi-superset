@@ -17,9 +17,9 @@ jobs:
       - name: SSH & deploy
         uses: appleboy/ssh-action@v1
         with:
-          host:   ${{ secrets.DEPLOY_HOST }}
+          host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
-          key:   ${{ secrets.DEPLOY_KEY }}
+          key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd ~/Documents/bank-bi-superset
             export IMAGE_TAG=${{ github.event.inputs.tag }}
