@@ -1,0 +1,77 @@
+services:
+  # ─────────────── PostgreSQL для метаданных Superset ───────────────
+  superset_db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PWD}
+    volumes:
+      - superset_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER}" ]
+      interval: 10s
+      retries: 5
+
+  # ─────────────── ClickHouse с данными банка ───────────────
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "9000:9000" # native protocol
+      - "8123:8123" # HTTP protocol
+    environment:
+      CLICKHOUSE_USER: admin # имя пользователя
+      CLICKHOUSE_PASSWORD: admin # пароль
+      CLICKHOUSE_DB: bank # создаст БД bank при старте
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./data:/data # CSV‑файлы из хоста
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--query", "SELECT 1" ]
+      interval: 10s
+      retries: 5
+
+  # ─────────────── Одноразовый инициализатор Superset ───────────────
+  superset_init:
+    build: ./docker/superset # Dockerfile с clickhouse‑connect
+    image: bankbi/superset:dev
+    entrypoint: [ "/bin/bash", "/app/init_superset.sh" ]
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      ADMIN_USER: ${ADMIN_USER}
+      ADMIN_PWD: ${ADMIN_PWD}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PWD}@superset_db:5432/${POSTGRES_DB}
+    volumes:
+      - ./infra/init_superset.sh:/app/init_superset.sh
+      - superset_home:/app/superset_home
+    depends_on:
+      superset_db:
+        condition: service_healthy
+    restart: "no"
+
+  # ─────────────── Основной веб‑сервер Superset ───────────────
+  superset:
+    build: ./docker/superset
+    image: bankbi/superset:dev
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PWD}@superset_db:5432/${POSTGRES_DB}
+      SUPERSET_LOAD_EXAMPLES: "no"
+    volumes:
+      - superset_home:/app/superset_home
+    depends_on:
+      superset_init:
+        condition: service_completed_successfully
+      superset_db:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+
+# ─────────────── Docker volumes ───────────────
+volumes:
+  superset_db_data:
+  clickhouse_data:
+  superset_home:
