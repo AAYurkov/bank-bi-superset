@@ -1,0 +1,27 @@
+name: Deploy to local server
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag (commit SHA)
+        required: true
+        default: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH & deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd ~/Documents/bank-bi-superset
+            export IMAGE_TAG="${{ github.event.inputs.tag }}"
+            docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_PAT }}
+            docker compose pull superset superset_init
+            docker compose up -d
