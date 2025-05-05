@@ -7,14 +7,11 @@ on:
       - "docker/superset/**"
       - ".github/workflows/build-push.yml"
 
-env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/superset
-
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      packages: write        # push в GHCR
+      packages: write        # разрешение на push в GHCR
       contents: read
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +22,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build image
         run: |
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}/superset" | tr '[:upper:]' '[:lower:]')
@@ -36,17 +33,24 @@ jobs:
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}/superset" | tr '[:upper:]' '[:lower:]')
           docker push $IMAGE_NAME:${{ github.sha }}
 
-      # ───── Smoke‑test ─────
       - name: Run container & health‑check
         run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}/superset" | tr '[:upper:]' '[:lower:]')
           docker run -d --name superset_test \
             -e SUPERSET_SECRET_KEY=test_key_123 \
             -p 18088:8088 $IMAGE_NAME:${{ github.sha }}
+
           for i in {1..20}; do
             sleep 5
-            curl -fs http://localhost:18088/health && exit 0
+            if curl -fs http://localhost:18088/health; then
+              echo "✅ Superset is healthy"
+              exit 0
+            fi
           done
-          echo "Superset health check failed" && docker logs superset_test && exit 1
+
+          echo "❌ Superset health check failed"
+          docker logs superset_test
+          exit 1
 
       - name: Stop test container
         if: always()
