@@ -52,7 +52,7 @@ services:
   # ─────────────── Одноразовый инициализатор Superset ───────────────
   superset_init:
     build: ./docker/superset # Dockerfile с clickhouse‑connect
-    image: ghcr.io/AAYurkov/bank-bi-superset/superset:${IMAGE_TAG:-latest}
+    image: ghcr.io/aayurkov/bank-bi-superset/superset:${IMAGE_TAG:-latest}
     entrypoint: [ "/bin/bash", "/app/init_superset.sh" ]
     environment:
       SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
@@ -71,7 +71,7 @@ services:
   # ─────────────── Основной веб‑сервер Superset ───────────────
   superset:
     build: ./docker/superset
-    image: ghcr.io/AAYurkov/bank-bi-superset/superset:${IMAGE_TAG:-latest}
+    image: ghcr.io/aayurkov/bank-bi-superset/superset:${IMAGE_TAG:-latest}
     ports:
       - "8088:8088"
     environment:
