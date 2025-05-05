@@ -25,12 +25,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Build image
-        run: docker build -t $IMAGE_NAME:${{ github.sha }} ./docker/superset
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}/superset" | tr '[:upper:]' '[:lower:]')
+          docker build -t $IMAGE_NAME:${{ github.sha }} ./docker/superset
 
       - name: Push image
-        run: docker push $IMAGE_NAME:${{ github.sha }}
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}/superset" | tr '[:upper:]' '[:lower:]')
+          docker push $IMAGE_NAME:${{ github.sha }}
 
       # ───── Smoke‑test ─────
       - name: Run container & health‑check
