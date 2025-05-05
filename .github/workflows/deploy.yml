@@ -18,7 +18,7 @@ jobs:
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
-          key_path: infra/ci/id_ed25519
+          key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd ~/Documents/bank-bi-superset
             export IMAGE_TAG="${{ github.event.inputs.tag }}"
