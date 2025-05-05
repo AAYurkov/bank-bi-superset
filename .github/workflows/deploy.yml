@@ -16,12 +16,20 @@ jobs:
       - name: SSH & deploy
         uses: appleboy/ssh-action@v1.1.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
+          host: ${{ secrets.DEPLOY_HOST }}         # например, host.docker.internal
+          username: ${{ secrets.DEPLOY_USER }}     # например, aryurkov
+          key: ${{ secrets.DEPLOY_KEY }}           # приватный ключ, как строка
+          port: 22
           script: |
+            echo "✅ Подключение прошло, выполняю деплой..."
             cd ~/Documents/bank-bi-superset
             export IMAGE_TAG="${{ github.event.inputs.tag }}"
             docker login ghcr.io -u ${{ secrets.GHCR_USER }} -p ${{ secrets.GHCR_PAT }}
             docker compose pull superset superset_init
             docker compose up -d
+          # 👉 отключаем проверку ключа хоста, чтобы избежать known_hosts проблем
+          fingerprint: ""
+          timeout: 60s
+          command_timeout: 10m
+          script_stop: true
+          debug: true
