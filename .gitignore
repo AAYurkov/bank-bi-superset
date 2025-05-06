@@ -3,3 +3,4 @@ __pycache__/
 superset_home/
 .env
 comments.db
+infra/ci/id_ed25519

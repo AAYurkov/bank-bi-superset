@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Комментарии к дашборду {{ dashboard_id }}</title>
+</head>
+
+<body>
+    <h1>Комментарии к дашборду #{{ dashboard_id }}</h1>
+
+    <form method="post">
+        <input name="author" placeholder="Ваше имя" required><br>
+        <textarea name="text" placeholder="Комментарий" required></textarea><br>
+        <label><input type="checkbox" name="is_owner"> Я автор дашборда</label><br>
+        <button type="submit">Добавить</button>
+    </form>
+
+    <hr>
+
+    {% for author, text, timestamp, is_owner in comments %}
+    <p><strong>{{ author }}{% if is_owner %} (владелец){% endif %}</strong> в {{ timestamp }}:</p>
+    <p>{{ text }}</p>
+    <hr>
+    {% endfor %}
+</body>
+
+</html>
